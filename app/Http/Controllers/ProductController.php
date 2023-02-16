@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use auth;
+
 use App\Model\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ProductRequest;
+use Facade\FlareClient\Http\Response;
+use App\Exceptions\ProductNotBelongsToUser;
+use Illuminate\Http\Resources\Json\Resource;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\ProductCollection;
-use Facade\FlareClient\Http\Response;
-use Illuminate\Http\Resources\Json\Resource;
-
+// use auth;
 class ProductController extends Controller
 {
     /**
@@ -93,6 +95,8 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        $this->ProductUserCheck($product);
+
          $product->update($request->all());
          return response([
             'data' => New ProductResource($product)
@@ -108,8 +112,17 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+       $this->ProductUserCheck($product);
+
        $product->delete();
        return response(Null,204);
 
+    }
+
+    public function ProductUserCheck($product)
+    {
+        if (Auth::id() !== $product->user_id) {
+            throw new ProductNotBelongsToUser;
+        }
     }
 }
